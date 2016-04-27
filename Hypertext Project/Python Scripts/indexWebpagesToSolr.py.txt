@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+import os
+import sunburnt
+import hashlib
+import logging
+import io
+import re
+
+# Usage: python indexToSolr.py [directory path]
+# First line of each file must have url
+
+# Default schema: id, text
+# Indexing uses document frequency
+# Content = stored, used for blurbs also sent to Text  OR  Text (non-optional) = indexed
+# Text = also contains the contents of all other fields
+
+def indexDocsToSolr(url, contents, title, folderName):
+    solrURL = "http://nick.dlib.vt.edu:8983/solr/blacklight-core"
+    solr_instance = sunburnt.SolrInterface(solrURL)
+    solrDocs = []
+    url = url.encode('utf-8')
+    html_id = hashlib.md5(url).hexdigest()
+    solr_doc = {"id":html_id, "text":contents, "content": contents, "type":"Webpage", "url":url, "collection_id":folderName, "title":title}
+    solrDocs.append(solr_doc)
+    solr_instance.add(solrDocs)
+    #except Exception as inst:
+    #    print "Error indexting file, with message" + str(inst)
+    try:
+        solr_instance.commit()
+        return html_id
+    except:
+        print "Could not Commit Changes to Solr, check the log files."
+        logging.info("Could not Commit Changes to Solr, check the log files.")
+    else:
+        print "Successfully committed changes"
+        logging.info("Successfully committed changes")
+	
+def addDocsFromDirectory(directory):
+    addedIds = []
+    print("directory: " + directory)
+    for fn in os.listdir(directory):
+        fn = os.path.join(directory, fn)
+        folderPath = os.path.dirname(fn)
+        _,folderName = os.path.split(folderPath)
+        print(os.path.dirname(fn))
+        print(os.path.basename(fn))
+        f = io.open (fn, 'r', encoding='utf-8')
+        url = f.readline()
+        title = f.readline()         
+        contents = f.read() #read all other lines
+        f.close()
+        print("Operating on file " + fn)
+        doc_id = indexDocsToSolr(url, contents, title, folderName)
+        addedIds.append(doc_id + '\n')
+    print 'Creating file with uploaded ids: see ./uploadIds.txt'
+    f = io.open('uploadedIds.txt','w', encoding='utf-8')
+    for s in addedIds:
+        s = s + '\n'
+        s = s.decode('utf-8')
+        f.write(s)
+    f.close()
+    
+if __name__ == "__main__":
+    directory = "C:\\Users\\Michael\\Documents\\VT 2016\\Hypertext\\Webpages\\z163-1000"
+    directory = directory.strip()
+	
+    addDocsFromDirectory(directory)

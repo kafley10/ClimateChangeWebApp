@@ -1,0 +1,30 @@
+Python Script Summary
+Two Scripts:
+
+downloadWebPagesFromTweet:
+Original script:
+- The input is an XML file of tweets
+- #1 Parses out all shortened urls (i.e. bit.ly) mentioned in the tweets
+- #2 Makes a response to that shortened url to 1) see if its still valid and 2) get the actual url of the tweets
+- #3 If the url is valid, it saves the HTTP response containing the readable text of the webpage.
+- As the output, the script creates one text file containing the HTTP response of each valid webpage.  
+How we updated the script:
+- Script currently saves the entire http response from the url
+- Need to change it to save only the readable TEXT of the webpage (within the HTTP response)
+- Need to parse the url and title of the webpage from the HTTP response and save those
+
+indexToSolr:
+Original script:
+- The input for this script is the path of the file to archive into SOLR.
+- This script will parse and map the contents of the file into given tags to send to SOLR (text, contents, title, url)
+- The script will create an array of dictionaries where each dictionary as the tag and its contents as a key/value pair 
+	("title"/"Climate Change in the 21st Century")
+- The script will connect to SOLR's indexing URL and send that array of dictionaries.
+How we updated the script:
+- The indexing script was designed to work with a different SOLR database, configured in a different way than ours.
+- Currently the python script runs on only one file at a time.  As we have way over 500 different text files, each representing a different webpage,
+we need to change the script to run on all text files within a given folder.
+- We need to update the SOLR URL that accepts the indexed files. 
+- SOLR accepts different search tags (i.e. url, title, author) that are passed for each file you want to index.
+	We need to change the script so it parses and sends the correct tags for each file that is indexed in SOLR.
+- We need to update the script so it parses the first few lines of each webpage's text file as the title and url.
